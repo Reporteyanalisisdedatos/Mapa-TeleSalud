@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Mapa Epidemiológico - Municipalidad de Córdoba</title>
+    <title>Mapa Tele Salud</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
@@ -383,19 +383,21 @@
 
         /* ========== TOOLTIPS LEAFLET ========== */
         .leaflet-tooltip {
-            font-size: 13px !important;
+            font-size: 12px !important;
             font-weight: 600 !important;
             font-family: 'Inter', sans-serif !important;
-            padding: 8px 12px !important;
-            background-color: rgba(255,255,255,0.96) !important;
-            border: 2px solid #005288 !important;
-            border-radius: 8px !important;
-            color: #333 !important;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.18) !important;
-            max-width: 220px !important;
-            white-space: normal !important;
-            word-wrap: break-word !important;
+            padding: 5px 14px !important;
+            background-color: #005288 !important;
+            border: none !important;
+            border-radius: 20px !important;
+            color: #fff !important;
+            box-shadow: 0 3px 12px rgba(0,82,136,0.35) !important;
+            max-width: 320px !important;
+            white-space: nowrap !important;
             text-align: center !important;
+        }
+        .leaflet-tooltip::before {
+            border-top-color: #005288 !important;
         }
 
         /* ========== MULTISELECT DROPDOWN ========== */
@@ -536,7 +538,7 @@
             overflow: hidden;
             transform: translateY(100%);
             transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
-            z-index: 2000;
+            z-index: 2200;
             font-family: 'Inter', sans-serif;
         }
 
@@ -764,6 +766,319 @@
             100% { opacity: 0; }
         }
 
+        /* ========== BUSCADOR DIRECCIÓN ========== */
+        .search-dir-container {
+            padding: 8px 12px 10px 12px;
+            background: #FAFAFC;
+            flex-shrink: 0;
+            border-bottom: 1px solid rgba(0,0,0,0.07);
+        }
+        .search-dir-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .search-dir-row {
+            display: flex;
+            gap: 6px;
+        }
+        #search-direccion, #search-barrio {
+            flex: 1;
+            padding: 9px 12px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            background: white;
+            color: #333;
+            box-sizing: border-box;
+        }
+        #search-direccion:focus, #search-barrio:focus {
+            outline: none;
+            border-color: #DC3545;
+            box-shadow: 0 0 0 2px rgba(220,53,69,0.15);
+        }
+        #btn-buscar-dir, #btn-buscar-barrio {
+            padding: 9px 14px;
+            background: #DC3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: opacity 0.2s;
+        }
+        #btn-buscar-dir:hover, #btn-buscar-barrio:hover { opacity: 0.85; }
+        #btn-buscar-dir:disabled, #btn-buscar-barrio:disabled { opacity: 0.5; cursor: default; }
+        #btn-limpiar-dir {
+            padding: 9px 10px;
+            background: #e9ecef;
+            color: #555;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: none;
+            transition: background 0.2s;
+        }
+        #btn-limpiar-dir:hover { background: #dee2e6; }
+        #search-dir-msg, #search-barrio-msg {
+            font-size: 11px;
+            color: #DC3545;
+            margin-top: 4px;
+            display: none;
+        }
+
+        /* ========== PANEL FLOTANTE RESULTADO BARRIO ========== */
+        #panel-barrio-resultado {
+            position: absolute;
+            bottom: 0; left: 0; right: 0; top: 0;
+            height: 100%;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+            z-index: 2100;
+            font-family: 'Inter', sans-serif;
+        }
+        #panel-barrio-resultado.visible { transform: translateY(0); }
+        .panel-barrio-header {
+            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+            color: white;
+            padding: 12px 14px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .panel-barrio-titulo {
+            font-weight: 700;
+            font-size: 14px;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .panel-barrio-close {
+            cursor: pointer;
+            font-size: 18px;
+            opacity: 0.8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: opacity 0.2s;
+        }
+        .panel-barrio-close:hover { opacity: 1; }
+        .panel-barrio-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding: 10px 14px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            flex-shrink: 0;
+        }
+        .panel-barrio-info-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .panel-barrio-info-label {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #888;
+            letter-spacing: 0.5px;
+        }
+        .panel-barrio-info-value {
+            font-size: 13px;
+            font-weight: 700;
+            color: #005288;
+        }
+        .panel-barrio-info-value.sin-dato {
+            color: #ccc;
+            font-weight: 400;
+            font-style: italic;
+        }
+
+        /* ========== PANEL FLOTANTE RESULTADO DIRECCIÓN ========== */
+        #panel-direccion-resultado {
+            position: absolute;
+            bottom: 0; left: 0; right: 0; top: 0;
+            height: 100%;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+            z-index: 2100;
+            font-family: 'Inter', sans-serif;
+        }
+        #panel-direccion-resultado.visible { transform: translateY(0); }
+        .panel-dir-header {
+            background: linear-gradient(135deg, #DC3545 0%, #b02030 100%);
+            color: white;
+            padding: 12px 14px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-shrink: 0;
+        }
+        .panel-dir-titulo {
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.3;
+            flex: 1;
+            padding-right: 8px;
+        }
+        .panel-dir-close {
+            cursor: pointer;
+            font-size: 16px;
+            opacity: 0.8;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+        .panel-dir-close:hover { opacity: 1; }
+        .panel-dir-body {
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .panel-dir-badge-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .panel-dir-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .panel-dir-section-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+        .panel-dir-cs-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 10px;
+            background: #f8f9fa;
+            border-radius: 7px;
+            border: 0.5px solid #e8eaed;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .panel-dir-cs-item:hover { border-color: #005288; background: #eaf4fb; }
+        .panel-dir-cs-nombre {
+            font-size: 12px;
+            font-weight: 600;
+            color: #222;
+            flex: 1;
+        }
+        .panel-dir-cs-dist {
+            font-size: 11px;
+            color: #888;
+            font-weight: 500;
+            margin-left: 8px;
+            flex-shrink: 0;
+        }
+
+        /* ========== RED DE ATENCIÓN EN PANEL DIRECCIÓN ========== */
+        .panel-dir-cs-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 0.5px solid #e8eaed;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+        .panel-dir-cs-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 9px 11px;
+        }
+        .panel-dir-cs-header-info { flex: 1; }
+        .panel-dir-cs-header-nombre {
+            font-size: 12px;
+            font-weight: 700;
+            color: #222;
+            margin-bottom: 2px;
+            cursor: pointer;
+        }
+        .panel-dir-cs-header-nombre:hover { color: #005288; }
+        .panel-dir-cs-header-dist {
+            font-size: 11px;
+            color: #888;
+        }
+        .panel-dir-btn-red {
+            background: linear-gradient(135deg, #005288 0%, #0070b8 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 5px 10px;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+            margin-left: 8px;
+            transition: opacity 0.15s;
+        }
+        .panel-dir-btn-red:hover { opacity: 0.85; }
+        .panel-dir-btn-red.active { background: linear-gradient(135deg, #b02030 0%, #DC3545 100%); }
+        .panel-dir-red-lista {
+            display: none;
+            padding: 0 11px 10px;
+            border-top: 0.5px solid #e8eaed;
+            margin-top: 4px;
+        }
+        .panel-dir-red-lista.open { display: block; }
+        .panel-dir-red-tipo {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #888;
+            margin: 8px 0 3px;
+        }
+        .panel-dir-red-item {
+            font-size: 11px;
+            color: #333;
+            padding: 4px 0;
+            border-bottom: 0.5px solid #f0f0f0;
+            line-height: 1.4;
+        }
+        .panel-dir-red-item:last-child { border-bottom: none; }
+        .panel-dir-red-empty {
+            font-size: 11px;
+            color: #aaa;
+            text-align: center;
+            padding: 8px 0;
+        }
+
         /* ========== RESPONSIVE ========== */
         @media (max-width: 768px) {
             .sidebar {
@@ -795,7 +1110,7 @@
                 <img src="https://raw.githubusercontent.com/reporteyanalisisdedatos/Mapa-TeleSalud/main/assets/HorizontalCTWhite.png" alt="Coordinación Tecnológica" style="height:52px;" />
             </div>
             <div class="header-divider" aria-hidden="true"></div>
-            <div class="page-title">Mapa Epidemiológico - Municipalidad de Córdoba</div>
+            <div class="page-title">Mapa Tele Salud</div>
         </div>
         <div class="header-bars">
             <div class="bar" style="background-color:#FFDA63;"></div>
@@ -806,6 +1121,23 @@
         <!-- Buscador -->
         <div class="search-container">
             <input type="text" id="search-efector" placeholder="🔍  Buscar efector..." />
+        </div>
+
+        <!-- Buscadores dirección + barrio -->
+        <div class="search-dir-container">
+            <div class="search-dir-label">📍 Buscar por dirección</div>
+            <div class="search-dir-row">
+                <input type="text" id="search-direccion" placeholder="Ej: San Juan 1234" />
+                <button id="btn-buscar-dir" title="Buscar">🔍</button>
+                <button id="btn-limpiar-dir" title="Limpiar">✕</button>
+            </div>
+            <div id="search-dir-msg"></div>
+            <div class="search-dir-label" style="margin-top:8px;">🏘️ Buscar por barrio</div>
+            <div class="search-dir-row">
+                <input type="text" id="search-barrio" placeholder="Ej: Santa Isabel, Villa El Libertador" />
+                <button id="btn-buscar-barrio" title="Buscar barrio">🔍</button>
+            </div>
+            <div id="search-barrio-msg"></div>
         </div>
 
         <!-- Leyenda de iconos -->
@@ -834,22 +1166,6 @@
         <!-- Filtros scrollables -->
         <div class="filters-container">
 
-            <!-- Filtros Provincia -->
-            <div class="filter-section">
-                <div class="filter-header">
-                    <span class="filter-icon">🗺️</span>
-                    Nivel Provincia
-                </div>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="chkDEPARTAMENTOS" />
-                    Departamentos
-                </label>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="chkLOCALIDADES" />
-                    Localidades
-                </label>
-            </div>
-
             <!-- Filtros Capital -->
             <div class="filter-section">
                 <div class="filter-header">
@@ -875,18 +1191,6 @@
                     <option value="all">Todas las Zonas</option>
                 </select>
 
-                <label class="checkbox-label">
-                    <input type="checkbox" id="chkCIRCUITO" />
-                    Circuitos
-                </label>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="chkSECCIONALES" />
-                    Seccionales
-                </label>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="chkENTEMETROPOLITANO" />
-                    Ente Metropolitano
-                </label>
                 <label class="checkbox-label">
                     <input type="checkbox" id="chkAP" />
                     Áreas Programáticas
@@ -928,6 +1232,10 @@
                 <span class="panel-close" id="panel-close">✕</span>
             </div>
             <div class="panel-direccion" id="panel-direccion">-</div>
+            <div id="panel-horario" style="display:none;padding:4px 14px 8px;font-size:12px;color:#444;border-bottom:0.5px solid #eee;flex-shrink:0;">
+                <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:#888;">🕐 Horario: </span>
+                <span id="panel-horario-texto"></span>
+            </div>
             <!-- Comparativa poblacional CS / Zona / Capital -->
             <div id="panel-pob-contexto" style="display:none;padding:8px 14px;border-bottom:0.5px solid #eee;flex-shrink:0;">
                 <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:#555;margin-bottom:7px;">Contexto Poblacional</div>
@@ -947,38 +1255,57 @@
                 </div>
             </div>
 
-            <div id="panel-poblacion" style="display:none;">
-                <div style="display:none;" id="panel-pobtotal"></div>
-                <div style="display:none;" id="panel-mujeres"></div>
-                <div style="display:none;" id="panel-varones"></div>
-                <div style="display:none;" id="panel-hogares"></div>
-                <div style="display:none;" id="panel-nbi"></div>
-                <div style="display:none;" id="panel-sincobertura"></div>
-            </div>
-            <div class="panel-stats">
-                <div class="panel-stat-card">
-                    <div class="panel-stat-label">Total de Atenciones</div>
-                    <div class="panel-stat-value" id="panel-atenciones">-</div>
-                </div>
-                <div class="panel-stat-card">
-                    <div class="panel-stat-label">Total de Pacientes</div>
-                    <div class="panel-stat-value" id="panel-pacientes">-</div>
-                </div>
-            </div>
             <button id="btn-red-atencion">🔗 Red de atención</button>
             <div id="panel-red">
                 <div class="red-titulo">Establecimientos vinculados</div>
                 <div id="panel-red-lista"></div>
             </div>
             <div class="panel-servicios">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid #005288;">
+                <div style="margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid #005288;">
                     <div class="panel-servicios-titulo" style="margin-bottom:0;border-bottom:none;">Servicios</div>
-                    <div style="display:flex;gap:24px;">
-                        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#005288;">Atenciones</span>
-                        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#005288;">Pacientes</span>
-                    </div>
                 </div>
                 <div id="panel-servicios-lista"></div>
+            </div>
+        </div>
+
+        <!-- Panel resultado búsqueda barrio -->
+        <div id="panel-barrio-resultado">
+            <div class="panel-barrio-header">
+                <div class="panel-barrio-titulo" id="panel-barrio-titulo">Barrio</div>
+                <span class="panel-barrio-close" id="panel-barrio-close">✕</span>
+            </div>
+            <div class="panel-barrio-info-grid" id="panel-barrio-info-grid">
+                <div class="panel-barrio-info-cell">
+                    <div class="panel-barrio-info-label">CPC</div>
+                    <div class="panel-barrio-info-value" id="panel-barrio-cpc">—</div>
+                </div>
+                <div class="panel-barrio-info-cell">
+                    <div class="panel-barrio-info-label">Zona</div>
+                    <div class="panel-barrio-info-value" id="panel-barrio-zona">—</div>
+                </div>
+                <div class="panel-barrio-info-cell" style="grid-column:1/-1;">
+                    <div class="panel-barrio-info-label">Área Programática</div>
+                    <div class="panel-barrio-info-value" id="panel-barrio-ap">—</div>
+                </div>
+            </div>
+            <div class="panel-dir-body">
+                <div class="panel-dir-section-title">Efectores en este barrio</div>
+                <div id="panel-barrio-efectores-lista"></div>
+            </div>
+        </div>
+
+        <!-- Panel resultado búsqueda dirección -->
+        <div id="panel-direccion-resultado">
+            <div class="panel-dir-header">
+                <div class="panel-dir-titulo" id="panel-dir-titulo">Dirección encontrada</div>
+                <span class="panel-dir-close" id="panel-dir-close">✕</span>
+            </div>
+            <div class="panel-dir-body">
+                <div class="panel-dir-badge-row" id="panel-dir-badges"></div>
+                <div id="panel-dir-cs-wrap">
+                    <div class="panel-dir-section-title">Efectores más cercanos</div>
+                    <div id="panel-dir-cs-lista"></div>
+                </div>
             </div>
         </div>
 
@@ -1020,9 +1347,18 @@
         let tiposSeleccionados = new Set();
         let atencionesData = [];
         let serviciosData = [];
+        let horariosData = [];
         let apData = [];
         let capaRedAtencion = null;
         let markerSeleccionado = null;
+        let markerPersona = null;
+        let barriosData = [];
+        let capaBarrio = null;
+
+        // Índices para búsquedas O(1)
+        let atencionesIndex = new Map();
+        let serviciosIndex = new Map();
+        let horariosIndex = new Map();
         const capas = {};
         const capasLabels = {};
         let allZonasFeatures = [];
@@ -1038,9 +1374,58 @@
 
         let datosZonasPoblacion = [];
 
+        // Definidos en scope externo para ser accesibles tanto desde DOMContentLoaded como desde el IIFE del buscador
+        const efectoresExcluidos = [
+            'secretaria de prev. y atenc. comunitaria',
+            'secretaría de prev. y atenc. comunitaria',
+        ];
+
+        const nombresEspecialesList = [
+            'medicina preventiva','dem','secretaría de salud','secretaria de salud',
+            'adicciones','salud mental','pec','direccion de calidad alimentaria',
+            'direccion de emergencias medicas 107','direccion de epidemiologia',
+            'laboratorio farmaceutico municipal','telesalud','pec los robles',
+            'dtc villa el libertador','pec comercial',
+            'secretaría de prev. y atenc. comunitaria','secretaria de prev. y atenc. comunitaria',
+            'centro comunitario maldonado','centro municipal de salud mental - aldeas',
+            'centro municipal de salud mental - jaire','centro municipal de salud mental - lazos',
+            'centro municipal de salud mental - pec maldonado','centro municipal de salud mental - pec yapeyu',
+            'centro municipal de salud mental - raíces','centro municipal de salud mental - raices',
+            'centro municipal de salud mental - tramas','direccion de salud mental',
+            'dirección de salud mental'
+        ];
+
+        function esNombreEspecial(nombre, tipo) {
+            if (tipo && (tipo.includes('servicio odontol') || tipo.includes('odontol'))) return true;
+            return nombresEspecialesList.some(k => nombre.includes(k));
+        }
+
+        // Estado del panel de dirección: capas naranjas y markers destacados por CS
+        const capasRedPorCS = new Map();
+        const markersCSDestacados = new Map();
+
+        // Definida aquí (no dentro de DOMContentLoaded) para que el IIFE del buscador pueda usarla
+        function crearIconoResaltado(urlBase) {
+            const sz = Math.round(36 * Math.max(0.5, Math.min(2, (map.getZoom()-10)*0.2+0.8)));
+            const total = sz + 20;
+            return L.divIcon({
+                className: '',
+                html: `<div style="position:relative;width:${total}px;height:${total}px;">
+                    <div style="position:absolute;inset:0;border-radius:50%;background:rgba(255,218,99,0.35);animation:pulse 1s ease-in-out infinite;"></div>
+                    <div style="position:absolute;inset:6px;border-radius:50%;background:rgba(255,218,99,0.5);animation:pulse 1s ease-in-out infinite 0.15s;"></div>
+                    <div style="position:absolute;inset:0;border-radius:50%;border:3px solid #FFDA63;animation:pulseRing 1s ease-out infinite;"></div>
+                    <img src="${urlBase}" style="position:absolute;top:10px;left:10px;width:${sz}px;height:${sz}px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));"/>
+                </div>`,
+                iconSize: [total, total],
+                iconAnchor: [total/2, total],
+                popupAnchor: [0, -total]
+            });
+        }
+
+        let map;
         document.addEventListener("DOMContentLoaded", () => {
 
-            const map = L.map('map', {
+            map = L.map('map', {
                 center: [-31.42, -64.18],
                 zoom: 13,
                 minZoom: 12,
@@ -1080,54 +1465,34 @@
             let iconoCentroSalud    = iconos.centroSalud;
             let iconoEstablecimiento = iconos.establecimiento;
 
-            // Ícono resaltado para marker seleccionado
-            function crearIconoResaltado(urlBase) {
-                const sz = Math.round(36 * Math.max(0.5, Math.min(2, (map.getZoom()-10)*0.2+0.8)));
-                const total = sz + 20;
-                return L.divIcon({
-                    className: '',
-                    html: `<div style="position:relative;width:${total}px;height:${total}px;">
-                        <div style="position:absolute;inset:0;border-radius:50%;background:rgba(255,218,99,0.35);animation:pulse 1s ease-in-out infinite;"></div>
-                        <div style="position:absolute;inset:6px;border-radius:50%;background:rgba(255,218,99,0.5);animation:pulse 1s ease-in-out infinite 0.15s;"></div>
-                        <div style="position:absolute;inset:0;border-radius:50%;border:3px solid #FFDA63;animation:pulseRing 1s ease-out infinite;"></div>
-                        <img src="${urlBase}" style="position:absolute;top:10px;left:10px;width:${sz}px;height:${sz}px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));"/>
-                    </div>`,
-                    iconSize: [total, total],
-                    iconAnchor: [total/2, total],
-                    popupAnchor: [0, -total]
-                });
-            }
+            // crearIconoResaltado está definido en el scope externo para ser accesible desde el IIFE del buscador
 
-            // Redibujar íconos al cambiar zoom
+            // Redibujar íconos al cambiar zoom (con debounce para evitar redibujados excesivos)
+            let _zoomTimer = null;
             map.on('zoomend', () => {
-                const z = map.getZoom();
-                iconos            = crearIconos(z);
-                iconoEfectores    = iconos.efectores;
-                iconoHPA          = iconos.hpa;
-                iconoCentroSalud  = iconos.centroSalud;
-                iconoEstablecimiento = iconos.establecimiento;
+                clearTimeout(_zoomTimer);
+                _zoomTimer = setTimeout(() => {
+                    const z = map.getZoom();
+                    iconos               = crearIconos(z);
+                    iconoEfectores       = iconos.efectores;
+                    iconoHPA             = iconos.hpa;
+                    iconoCentroSalud     = iconos.centroSalud;
+                    iconoEstablecimiento = iconos.establecimiento;
 
-                // Actualizar íconos en capa activa sin recargar datos
-                if (capaEfectores) {
-                    capaEfectores.eachLayer(layer => {
-                        if (!layer.setIcon) return;
-                        const props = layer._datosPrincipales;
-                        if (!props) return;
-                        const nombre = (props.Centro || '').toLowerCase();
-                        const tipo   = (props.Tipo   || '').toLowerCase();
-                        if (tipo.includes('hospital') || tipo.includes('hpa') || nombre.includes('padre la monaca'))
-                            layer.setIcon(iconoHPA);
-                        else if (esNombreEspecial(nombre, tipo))
-                            layer.setIcon(iconoEfectores);
-                        else
-                            layer.setIcon(iconoCentroSalud);
-                    });
-                }
-                if (capaEstablecimientos) {
-                    capaEstablecimientos.eachLayer(layer => {
-                        if (layer.setIcon) layer.setIcon(iconoEstablecimiento);
-                    });
-                }
+                    if (capaEfectores) {
+                        capaEfectores.eachLayer(layer => {
+                            if (!layer.setIcon) return;
+                            const props = layer._datosPrincipales;
+                            if (!props) return;
+                            layer.setIcon(seleccionarIcono(props.Centro, props.Tipo));
+                        });
+                    }
+                    if (capaEstablecimientos) {
+                        capaEstablecimientos.eachLayer(layer => {
+                            if (layer.setIcon) layer.setIcon(iconoEstablecimiento);
+                        });
+                    }
+                }, 150);
             });
 
             L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
@@ -1236,12 +1601,17 @@
             fetch("https://raw.githubusercontent.com/reporteyanalisisdedatos/Mapa-TeleSalud/main/data/atenciones_centros.json")
                 .then(r => r.ok ? r.json() : Promise.reject('404'))
                 .then(data => {
-                    // Filtrar: si es CS → solo Consulta Externa
                     atencionesData = (data.data || []).filter(d => {
                         if (d.Centro && d.Centro.toUpperCase().startsWith('CS ')) {
                             return d.Area === 'Consulta Externa';
                         }
                         return true;
+                    });
+                    atencionesIndex.clear();
+                    atencionesData.forEach(d => {
+                        const key = (d.Centro || '').trim();
+                        if (!atencionesIndex.has(key)) atencionesIndex.set(key, []);
+                        atencionesIndex.get(key).push(d);
                     });
                     console.log('✅ atenciones cargadas:', atencionesData.length);
                 })
@@ -1251,9 +1621,43 @@
                 .then(r => r.ok ? r.json() : Promise.reject('404'))
                 .then(data => {
                     serviciosData = (data.data || []).filter(d => d.Centro !== 'CS XX');
+                    serviciosIndex.clear();
+                    serviciosData.forEach(d => {
+                        const key = (d.Centro || '').trim();
+                        if (!serviciosIndex.has(key)) serviciosIndex.set(key, []);
+                        serviciosIndex.get(key).push(d);
+                    });
                     console.log('✅ servicios cargados:', serviciosData.length);
                 })
                 .catch(() => { console.warn('servicios_centros.json no disponible.'); });
+
+            fetch("https://raw.githubusercontent.com/reporteyanalisisdedatos/Mapa-TeleSalud/main/data/HorariosEfectores.json")
+                .then(r => r.ok ? r.json() : Promise.reject('404'))
+                .then(data => {
+                    horariosData = data.data || [];
+                    horariosIndex.clear();
+                    horariosData.forEach(h => {
+                        const key = (h.Centro || '').trim().toLowerCase();
+                        horariosIndex.set(key, h);
+                    });
+                    console.log('✅ horarios cargados:', horariosData.length);
+                })
+                .catch(() => { console.warn('HorariosEfectores.json no disponible.'); });
+
+            fetch("https://raw.githubusercontent.com/reporteyanalisisdedatos/Mapa-TeleSalud/main/layers/barrios_cordoba.json")
+                .then(r => r.ok ? r.json() : Promise.reject('404'))
+                .then(raw => {
+                    // Agrupar por nombre: un barrio puede tener múltiples polígonos
+                    const grupos = new Map();
+                    raw.forEach(b => {
+                        const nom = b.nombre;
+                        if (!grupos.has(nom)) grupos.set(nom, []);
+                        grupos.get(nom).push(b.geometria.coordenadas[0]);
+                    });
+                    barriosData = [...grupos.entries()].map(([nombre, anillos]) => ({ nombre, anillos }));
+                    console.log('✅ barrios cargados:', barriosData.length, 'únicos');
+                })
+                .catch(() => { console.warn('barrios_cordoba.json no disponible.'); });
 
             fetch("https://raw.githubusercontent.com/reporteyanalisisdedatos/Mapa-TeleSalud/main/layers/AP.json")
                 .then(r => r.ok ? r.json() : Promise.reject('404'))
@@ -1305,18 +1709,11 @@
                         capaEfectores = L.geoJSON(filtrados, {
                             pointToLayer: (feature, latlng) => {
                                 const props = feature.properties;
-                                const nombre = (props.Centro || '').toLowerCase();
-                                const tipo = (props.Tipo || '').toLowerCase();
-                                let icono = iconoCentroSalud;
-                                if (tipo.includes('hospital') || tipo.includes('hpa') || nombre.includes('padre la monaca')) {
-                                    icono = iconoHPA;
-                                } else if (esNombreEspecial(nombre, tipo)) {
-                                    icono = iconoEfectores;
-                                }
-                                return L.marker(latlng, { icon: icono });
+                                return L.marker(latlng, { icon: seleccionarIcono(props.Centro, props.Tipo) });
                             },
                             onEachFeature: (feature, layer) => {
                                 const props = feature.properties;
+                                layer.bindTooltip(props.Centro, { direction: 'top', offset: [0, -35] });
                                 layer.bindPopup(crearPopupCentroSalud({
                                     nombre: props.Centro, tipo: props.Tipo, direccion: props.Direccion,
                                     poblacion: props.PoblacionTotal ?? 0, mujeres: props.Mujeres ?? 0,
@@ -1533,11 +1930,6 @@
             /* ============================
                TOGGLES CAPAS
             ============================ */
-            document.getElementById('chkCIRCUITO').onchange = e => toggleLayer('CIRCUITO', e.target.checked);
-            document.getElementById('chkSECCIONALES').onchange = e => toggleLayer('SECCIONALES', e.target.checked);
-            document.getElementById('chkENTEMETROPOLITANO').onchange = e => toggleLayer('ENTEMETROPOLITANO', e.target.checked);
-            document.getElementById('chkDEPARTAMENTOS').onchange = e => toggleLayer('DEPARTAMENTOS', e.target.checked);
-            document.getElementById('chkLOCALIDADES').onchange = e => toggleLayer('LOCALIDADES', e.target.checked);
             document.getElementById('chkAP').onchange = e => toggleLayer('AP', e.target.checked);
 
             function toggleLayer(nombre, visible) {
@@ -1572,29 +1964,15 @@
                 }) || null;
             }
 
-            // Efectores a excluir del mapa (dejaron de existir)
-            const efectoresExcluidos = [
-                'secretaria de prev. y atenc. comunitaria',
-                'secretaría de prev. y atenc. comunitaria',
-            ];
+            // efectoresExcluidos, nombresEspecialesList y esNombreEspecial
+            // están definidos en el scope externo para ser accesibles desde el IIFE del buscador de dirección
 
-            const nombresEspecialesList = [
-                'medicina preventiva','dem','secretaría de salud','secretaria de salud',
-                'adicciones','salud mental','pec','direccion de calidad alimentaria',
-                'direccion de emergencias medicas 107','direccion de epidemiologia',
-                'laboratorio farmaceutico municipal','telesalud','pec los robles',
-                'dtc villa el libertador','pec comercial',
-                'secretaría de prev. y atenc. comunitaria','secretaria de prev. y atenc. comunitaria',
-                'centro comunitario maldonado','centro municipal de salud mental - aldeas',
-                'centro municipal de salud mental - jaire','centro municipal de salud mental - lazos',
-                'centro municipal de salud mental - pec maldonado','centro municipal de salud mental - pec yapeyu',
-                'centro municipal de salud mental - raíces','centro municipal de salud mental - raices',
-                'centro municipal de salud mental - tramas','direccion de salud mental',
-                'dirección de salud mental'
-            ];
-            function esNombreEspecial(nombre, tipo) {
-                if (tipo && (tipo.includes('servicio odontol') || tipo.includes('odontol'))) return true;
-                return nombresEspecialesList.some(k => nombre.includes(k));
+            function seleccionarIcono(nombre, tipo) {
+                const n = (nombre || '').toLowerCase();
+                const t = (tipo || '').toLowerCase();
+                if (t.includes('hospital') || t.includes('hpa') || n.includes('padre la monaca')) return iconoHPA;
+                if (esNombreEspecial(n, t)) return iconoEfectores;
+                return iconoCentroSalud;
             }
 
             /* ============================
@@ -1687,6 +2065,7 @@
 
                 filtrados.forEach(d => {
                     const marker = L.marker([d.lat, d.lng], { icon: iconoEstablecimiento });
+                    marker.bindTooltip(d.centro || 'S/D', { direction: 'top', offset: [0, -20] });
                     marker.bindPopup(`
                         <div style="font-family:'Inter',sans-serif;min-width:200px;">
                             <div style="font-weight:700;font-size:14px;margin-bottom:6px;color:#005288;text-align:center;">
@@ -1731,17 +2110,13 @@
                 capaEfectores = L.geoJSON(featuresAgrupadas, {
                     pointToLayer: (feature, latlng) => {
                         const props = feature.properties.grupoEfectores[0];
-                        const nombre = (props.Centro || '').toLowerCase();
-                        const tipo = (props.Tipo || '').toLowerCase();
-                        let icono = iconoCentroSalud;
-                        if (tipo.includes('hospital') || tipo.includes('hpa') || nombre.includes('padre la monaca')) icono = iconoHPA;
-                        else if (esNombreEspecial(nombre, tipo)) icono = iconoEfectores;
-                        const m = L.marker(latlng, { icon: icono });
+                        const m = L.marker(latlng, { icon: seleccionarIcono(props.Centro, props.Tipo) });
                         m._datosPrincipales = props; // ref para zoom dinámico
+                        m.bindTooltip(props.Centro, { direction: 'top', offset: [0, -35] });
                         m.on('click', () => {
-                            // Restaurar marker anterior
+                            // Restaurar marker anterior (con try/catch por si fue removido del mapa)
                             if (markerSeleccionado && markerSeleccionado._iconoOriginal) {
-                                markerSeleccionado.setIcon(markerSeleccionado._iconoOriginal);
+                                try { markerSeleccionado.setIcon(markerSeleccionado._iconoOriginal); } catch(e) {}
                             }
                             // Resaltar este marker
                             const iconoOrig = m.options.icon;
@@ -1812,12 +2187,6 @@
                 Object.entries(coordsUnicas).forEach(([key, features]) => {
                     const [lat, lng] = key.split(',').map(parseFloat);
                     const props = features[0].properties;
-                    const nombre = (props.Centro || '').toLowerCase();
-                    const tipo = (props.Tipo || '').toLowerCase();
-                    let icono = iconoCentroSalud;
-                    if (tipo.includes('hospital') || tipo.includes('hpa') || nombre.includes('padre la monaca')) icono = iconoHPA;
-                    else if (esNombreEspecial(nombre, tipo)) icono = iconoEfectores;
-
                     const popupHtml = features.map(f => {
                         const p = f.properties;
                         return crearPopupCentroSalud({
@@ -1829,8 +2198,9 @@
                         });
                     }).join('<hr style="margin:8px 0;">');
 
-                    const mk = L.marker([lat,lng],{icon:icono});
-                    mk._datosPrincipales = features[0].properties;
+                    const mk = L.marker([lat, lng], { icon: seleccionarIcono(props.Centro, props.Tipo) });
+                    mk._datosPrincipales = props;
+                    mk.bindTooltip(props.Centro, { direction: 'top', offset: [0, -35] });
                     mk.on('click', () => {
                         const p = features[0].properties;
                         mostrarPanelCentro(p.Centro, p.Tipo, p.Direccion, {
@@ -1977,32 +2347,14 @@
                     ctxPanel.style.display = 'none';
                 }
 
-                // Datos poblacionales detalle
-                const panelPob = document.getElementById('panel-poblacion');
-                if (pob.poblacion > 0) {
-                    panelPob.style.display = 'block';
-                    document.getElementById('panel-pobtotal').textContent    = (pob.poblacion || 0).toLocaleString('es-AR');
-                    document.getElementById('panel-mujeres').textContent     = (pob.mujeres   || 0).toLocaleString('es-AR');
-                    document.getElementById('panel-varones').textContent     = (pob.varones   || 0).toLocaleString('es-AR');
-                    document.getElementById('panel-hogares').textContent     = (pob.hogares   || 0).toLocaleString('es-AR');
-                    document.getElementById('panel-nbi').textContent         = (pob.nbi       || 0).toLocaleString('es-AR');
-                    document.getElementById('panel-sincobertura').textContent= (pob.sinCobertura || 0).toLocaleString('es-AR');
-                } else {
-                    panelPob.style.display = 'none';
-                }
-
-                // Buscar atenciones del centro
-                const atencionCentro = atencionesData.filter(d =>
-                    (d.Centro || '').trim() === nombreNorm
-                );
+                // Buscar atenciones del centro — O(1) con índice
+                const atencionCentro = atencionesIndex.get(nombreNorm) || [];
 
                 const totalAtenciones = atencionCentro.reduce((s, d) => s + (d.atenciones || 0), 0);
                 const totalPacientes  = atencionCentro.reduce((s, d) => s + (d.pacientes  || 0), 0);
 
-                // Buscar servicios del centro con reglas SOM
-                let serviciosCentro = serviciosData.filter(d =>
-                    (d.Centro || '').trim() === nombreNorm
-                );
+                // Buscar servicios del centro con reglas SOM — O(1) con índice
+                let serviciosCentro = (serviciosIndex.get(nombreNorm) || []).slice();
 
                 // SOM San Martín (no 24hs) → excluir URG
                 if (nombreNorm === 'SOM Servicio Odontologico Municipal' &&
@@ -2026,14 +2378,20 @@
                 // panel-subtitulo reemplazado por badges
                 document.getElementById('panel-direccion').textContent  = direccion || 'Sin dirección registrada';
 
+                // Horario — O(1) con índice
+                const horarioEntry = horariosIndex.get(nombreNorm.toLowerCase());
+                const panelHorario = document.getElementById('panel-horario');
+                if (horarioEntry && horarioEntry.Horario) {
+                    document.getElementById('panel-horario-texto').textContent = horarioEntry.Horario;
+                    panelHorario.style.display = 'block';
+                } else {
+                    panelHorario.style.display = 'none';
+                }
+
                 // Guardar nombre para Red de atención
                 document.getElementById('btn-red-atencion')._centroNombre = nombreNorm;
                 document.getElementById('panel-red').style.display = 'none';
                 document.getElementById('panel-red-lista').innerHTML = '';
-                document.getElementById('panel-atenciones').textContent =
-                    totalAtenciones > 0 ? totalAtenciones.toLocaleString('es-AR') : 'S/D';
-                document.getElementById('panel-pacientes').textContent  =
-                    totalPacientes  > 0 ? totalPacientes.toLocaleString('es-AR')  : 'S/D';
 
                 // Servicios
                 const lista = document.getElementById('panel-servicios-lista');
@@ -2043,20 +2401,11 @@
                     lista.innerHTML = '<div style="font-size:11px;color:#aaa;text-align:center;padding:10px;">Sin datos de servicios</div>';
                 } else {
                     serviciosCentro
-                        .sort((a, b) => (b.atenciones_servicio || 0) - (a.atenciones_servicio || 0))
+                        .sort((a, b) => (a.Servicio || '').localeCompare(b.Servicio || '', 'es'))
                         .forEach(s => {
                             const div = document.createElement('div');
                             div.className = 'panel-servicio-item';
-                            div.innerHTML = `
-                                <span class="panel-servicio-nombre">${s.Servicio || 'S/D'}</span>
-                                <div class="panel-servicio-stats">
-                                    <div class="panel-servicio-stat">
-                                        <span class="panel-servicio-stat-value">${(s.atenciones_servicio || 0).toLocaleString('es-AR')}</span>
-                                    </div>
-                                    <div class="panel-servicio-stat">
-                                        <span class="panel-servicio-stat-value">${(s.pacientes_servicio || 0).toLocaleString('es-AR')}</span>
-                                    </div>
-                                </div>`;
+                            div.innerHTML = `<span class="panel-servicio-nombre">${s.Servicio || 'S/D'}</span>`;
                             lista.appendChild(div);
                         });
                 }
@@ -2069,12 +2418,10 @@
             document.getElementById('panel-close').addEventListener('click', () => {
                 document.getElementById('panel-centro').classList.remove('visible');
                 document.getElementById('panel-red').style.display = 'none';
-                // Restaurar marker seleccionado
                 if (markerSeleccionado && markerSeleccionado._iconoOriginal) {
-                    markerSeleccionado.setIcon(markerSeleccionado._iconoOriginal);
+                    try { markerSeleccionado.setIcon(markerSeleccionado._iconoOriginal); } catch(e) {}
                     markerSeleccionado = null;
                 }
-                // Limpiar capa red de atención
                 if (capaRedAtencion) { map.removeLayer(capaRedAtencion); capaRedAtencion = null; }
             });
 
@@ -2176,7 +2523,573 @@
                 });
             });
 
+            // Exponer para que el IIFE del buscador de dirección pueda abrir el panel de un CS
+            window._mostrarPanelCentro = mostrarPanelCentro;
+
         }); // DOMContentLoaded
+
+        /* ============================
+           BUSCADOR DE DIRECCIÓN
+        ============================ */
+        (function() {
+            const inputDir    = document.getElementById('search-direccion');
+            const btnBuscar   = document.getElementById('btn-buscar-dir');
+            const btnLimpiar  = document.getElementById('btn-limpiar-dir');
+            const msgEl       = document.getElementById('search-dir-msg');
+            const panelResult = document.getElementById('panel-direccion-resultado');
+            const panelClose  = document.getElementById('panel-dir-close');
+
+            // Icono Persona
+            const iconoPersona = L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/reporteyanalisisdedatos/Mapa-TeleSalud/main/assets/Persona.png',
+                iconSize: [46, 46],
+                iconAnchor: [23, 46],
+                popupAnchor: [0, -46]
+            });
+
+            // Haversine distance en km
+            function distanciaKm(lat1, lng1, lat2, lng2) {
+                const R = 6371;
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLng = (lng2 - lng1) * Math.PI / 180;
+                const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+                return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            }
+
+            // Point in polygon (ray casting)
+            function pointInPolygon(lat, lng, coordinates) {
+                // coordinates puede ser anidado (Polygon o MultiPolygon)
+                const ring = Array.isArray(coordinates[0][0]) ? coordinates[0] : coordinates;
+                let inside = false;
+                for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+                    const xi = ring[i][0], yi = ring[i][1];
+                    const xj = ring[j][0], yj = ring[j][1];
+                    const intersect = ((yi > lat) !== (yj > lat)) &&
+                        (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+                    if (intersect) inside = !inside;
+                }
+                return inside;
+            }
+
+            function detectarZona(lat, lng) {
+                if (!allZonasFeatures || !allZonasFeatures.length) return null;
+                for (const f of allZonasFeatures) {
+                    const coords = f.geometry?.coordinates;
+                    if (!coords) continue;
+                    const tipo = f.geometry.type;
+                    if (tipo === 'Polygon') {
+                        if (pointInPolygon(lat, lng, coords[0])) return f.properties.name || null;
+                    } else if (tipo === 'MultiPolygon') {
+                        for (const poly of coords) {
+                            if (pointInPolygon(lat, lng, poly[0])) return f.properties.name || null;
+                        }
+                    }
+                }
+                return null;
+            }
+
+            function detectarAP(lat, lng) {
+                if (!capas.AP) return null;
+                let apEncontrada = null;
+                capas.AP.eachLayer(layer => {
+                    if (apEncontrada) return;
+                    try {
+                        const bounds = layer.getBounds();
+                        if (bounds && bounds.contains([lat, lng])) {
+                            // verificación más precisa con pointInPolygon
+                            const geo = layer.toGeoJSON();
+                            const coords = geo.geometry?.coordinates;
+                            const tipo = geo.geometry?.type;
+                            if (tipo === 'Polygon' && pointInPolygon(lat, lng, coords[0])) {
+                                apEncontrada = geo.properties?.denominacion || geo.properties?.id_area || null;
+                            } else if (tipo === 'MultiPolygon') {
+                                for (const poly of coords) {
+                                    if (pointInPolygon(lat, lng, poly[0])) {
+                                        apEncontrada = geo.properties?.denominacion || geo.properties?.id_area || null;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    } catch(e) {}
+                });
+                return apEncontrada;
+            }
+
+            function csCercanos(lat, lng, cantidad) {
+                if (!efectoresData) return [];
+                return efectoresData
+                    .filter(f => {
+                        const tipo = (f.properties.Tipo || '').toLowerCase();
+                        const nombre = (f.properties.Centro || '').toLowerCase();
+                        // Solo centros de salud (no hospitales, no especiales)
+                        return !tipo.includes('hospital') && !tipo.includes('hpa') &&
+                               !nombre.includes('padre la monaca') &&
+                               !esNombreEspecial(nombre, tipo);
+                    })
+                    .map(f => {
+                        const [flng, flat] = f.geometry.coordinates;
+                        return {
+                            nombre: f.properties.Centro,
+                            direccion: f.properties.Direccion,
+                            lat: flat,
+                            lng: flng,
+                            dist: distanciaKm(lat, lng, flat, flng)
+                        };
+                    })
+                    .sort((a, b) => a.dist - b.dist)
+                    .slice(0, cantidad);
+            }
+
+            function mostrarPanel(lat, lng, direccionTexto) {
+                const zona = detectarZona(lat, lng);
+                const ap   = detectarAP(lat, lng);
+                const cs   = csCercanos(lat, lng, 6);
+
+                // Título
+                document.getElementById('panel-dir-titulo').textContent = direccionTexto;
+
+                // Badges zona y AP
+                const badgesEl = document.getElementById('panel-dir-badges');
+                badgesEl.innerHTML = '';
+                if (zona) {
+                    const b = document.createElement('span');
+                    b.className = 'panel-dir-badge';
+                    b.style.cssText = 'background:#FFDA63;color:#005288;';
+                    b.textContent = zona;
+                    badgesEl.appendChild(b);
+                }
+                if (ap) {
+                    const b = document.createElement('span');
+                    b.className = 'panel-dir-badge';
+                    b.style.cssText = 'background:#e8f4fb;color:#005288;';
+                    b.textContent = 'AP: ' + ap;
+                    badgesEl.appendChild(b);
+                }
+                if (!zona && !ap) {
+                    const b = document.createElement('span');
+                    b.className = 'panel-dir-badge';
+                    b.style.cssText = 'background:#f8d7da;color:#721c24;';
+                    b.textContent = 'Fuera del área municipal';
+                    badgesEl.appendChild(b);
+                }
+
+                // Lista 6 efectores cercanos con Red de atención
+                const csLista = document.getElementById('panel-dir-cs-lista');
+                csLista.innerHTML = '';
+                if (cs.length === 0) {
+                    csLista.innerHTML = '<div style="font-size:12px;color:#aaa;text-align:center;padding:8px;">Sin datos de centros</div>';
+                } else {
+                    const iconoNaranja = L.divIcon({
+                        className: '',
+                        html: `<div style="width:14px;height:14px;border-radius:50%;background:#FF8C00;border:2.5px solid #CC5500;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`,
+                        iconSize: [14, 14], iconAnchor: [7, 7]
+                    });
+
+                    cs.forEach(c => {
+                        const distStr = c.dist < 1
+                            ? `📍 ${Math.round(c.dist * 1000)} m`
+                            : `📍 ${c.dist.toFixed(1)} km`;
+
+                        const vinculados = establecimientosData.filter(d =>
+                            (d.institucion || '').trim() === (c.nombre || '').trim()
+                        );
+
+                        const card = document.createElement('div');
+                        card.className = 'panel-dir-cs-card';
+
+                        const header = document.createElement('div');
+                        header.className = 'panel-dir-cs-header';
+                        header.innerHTML = `
+                            <div class="panel-dir-cs-header-info">
+                                <div class="panel-dir-cs-header-nombre">${c.nombre}</div>
+                                <div class="panel-dir-cs-header-dist">${distStr}</div>
+                            </div>
+                            <button class="panel-dir-btn-red">🔗 Red</button>`;
+
+                        // Click en nombre → resaltar marker (sin zoom) + abrir panel info del CS
+                        header.querySelector('.panel-dir-cs-header-nombre').addEventListener('click', () => {
+                            // Resaltar el marker en el mapa sin cambiar el zoom
+                            if (capaEfectores) {
+                                capaEfectores.eachLayer(layer => {
+                                    if (!layer.setIcon || !layer._datosPrincipales) return;
+                                    if ((layer._datosPrincipales.Centro || '') === c.nombre) {
+                                        if (markerSeleccionado && markerSeleccionado._iconoOriginal) {
+                                            try { markerSeleccionado.setIcon(markerSeleccionado._iconoOriginal); } catch(e) {}
+                                        }
+                                        const iconoOrig = layer.options.icon;
+                                        layer._iconoOriginal = iconoOrig;
+                                        try { layer.setIcon(crearIconoResaltado(iconoOrig.options.iconUrl)); } catch(e) {}
+                                        markerSeleccionado = layer;
+                                        if (!map.getBounds().contains([c.lat, c.lng])) {
+                                            map.panTo([c.lat, c.lng]);
+                                        }
+                                    }
+                                });
+                            }
+                            if (window._mostrarPanelCentro && efectoresData) {
+                                const ef = efectoresData.find(f => (f.properties.Centro || '') === c.nombre);
+                                if (ef) {
+                                    const p = ef.properties;
+                                    window._mostrarPanelCentro(p.Centro, p.Tipo, p.Direccion, {
+                                        poblacion:    p.PoblacionTotal ?? 0,
+                                        mujeres:      p.Mujeres ?? 0,
+                                        varones:      p.Varones ?? 0,
+                                        hogares:      p.Hogares ?? 0,
+                                        nbi:          p.HogaresNBI ?? 0,
+                                        sinCobertura: p.PoblacionSinCobertura ?? 0,
+                                        zonaNum:      p.Zona ?? null
+                                    });
+                                }
+                            }
+                        });
+
+                        const redLista = document.createElement('div');
+                        redLista.className = 'panel-dir-red-lista';
+
+                        if (vinculados.length === 0) {
+                            redLista.innerHTML = '<div class="panel-dir-red-empty">Sin establecimientos vinculados</div>';
+                        } else {
+                            const porTipo = {};
+                            vinculados.forEach(d => {
+                                const t = d.tipo || 'Otro';
+                                if (!porTipo[t]) porTipo[t] = [];
+                                porTipo[t].push(d);
+                            });
+                            Object.entries(porTipo).sort().forEach(([tipo, items]) => {
+                                const tipoDiv = document.createElement('div');
+                                tipoDiv.className = 'panel-dir-red-tipo';
+                                tipoDiv.textContent = tipo;
+                                redLista.appendChild(tipoDiv);
+                                items.forEach(d => {
+                                    const item = document.createElement('div');
+                                    item.className = 'panel-dir-red-item';
+                                    item.innerHTML = `<b>${d.centro || d.nombre || 'S/D'}</b>${d.direccion ? '<br>' + d.direccion : ''}`;
+                                    redLista.appendChild(item);
+                                });
+                            });
+                        }
+
+                        const btnRed = header.querySelector('.panel-dir-btn-red');
+                        btnRed.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const isOpen = redLista.classList.toggle('open');
+                            btnRed.classList.toggle('active', isOpen);
+
+                            if (isOpen) {
+                                // Mostrar puntos naranjas de los establecimientos vinculados
+                                const capa = L.layerGroup();
+                                vinculados.filter(d => d.lat && d.lng).forEach(d => {
+                                    const mk = L.marker([d.lat, d.lng], { icon: iconoNaranja });
+                                    mk.bindTooltip(`<b>${d.centro}</b><br>${d.tipo || ''}`, { direction: 'top', offset: [0, -8] });
+                                    capa.addLayer(mk);
+                                });
+                                capa.addTo(map);
+                                capasRedPorCS.set(c.nombre, capa);
+
+                                // Destacar el marker del CS en el mapa
+                                if (capaEfectores && !markersCSDestacados.has(c.nombre)) {
+                                    capaEfectores.eachLayer(layer => {
+                                        if (!layer.setIcon || !layer._datosPrincipales) return;
+                                        if ((layer._datosPrincipales.Centro || '') === c.nombre) {
+                                            const iconoOrig = layer.options.icon;
+                                            const urlBase = iconoOrig?.options?.iconUrl;
+                                            if (urlBase) {
+                                                layer._iconoOriginalRed = iconoOrig;
+                                                try { layer.setIcon(crearIconoResaltado(urlBase)); } catch(err) {}
+                                                markersCSDestacados.set(c.nombre, layer);
+                                            }
+                                        }
+                                    });
+                                }
+                            } else {
+                                // Quitar puntos naranjas
+                                const capa = capasRedPorCS.get(c.nombre);
+                                if (capa) { map.removeLayer(capa); capasRedPorCS.delete(c.nombre); }
+
+                                // Restaurar marker del CS
+                                const mk = markersCSDestacados.get(c.nombre);
+                                if (mk && mk._iconoOriginalRed) {
+                                    try { mk.setIcon(mk._iconoOriginalRed); } catch(err) {}
+                                    markersCSDestacados.delete(c.nombre);
+                                }
+                            }
+                        });
+
+                        card.appendChild(header);
+                        card.appendChild(redLista);
+                        csLista.appendChild(card);
+                    });
+                }
+
+                panelResult.classList.add('visible');
+            }
+
+            function limpiar() {
+                // Quitar todos los puntos naranjas y restaurar markers CS destacados
+                capasRedPorCS.forEach(capa => { try { map.removeLayer(capa); } catch(e) {} });
+                capasRedPorCS.clear();
+                markersCSDestacados.forEach(mk => {
+                    if (mk._iconoOriginalRed) {
+                        try { mk.setIcon(mk._iconoOriginalRed); } catch(e) {}
+                    }
+                });
+                markersCSDestacados.clear();
+
+                if (markerPersona) { map.removeLayer(markerPersona); markerPersona = null; }
+                panelResult.classList.remove('visible');
+                inputDir.value = '';
+                btnLimpiar.style.display = 'none';
+                msgEl.style.display = 'none';
+                map.setView([-31.42, -64.18], 13);
+            }
+
+            async function buscarDireccion() {
+                const texto = inputDir.value.trim();
+                if (!texto) return;
+
+                msgEl.style.display = 'none';
+                btnBuscar.disabled = true;
+                btnBuscar.textContent = '⏳';
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                try {
+                    const query = encodeURIComponent(`${texto}, Córdoba, Argentina`);
+                    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${query}&countrycodes=ar`;
+                    const res = await fetch(url, { headers: { 'Accept-Language': 'es' }, signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    const data = await res.json();
+
+                    if (!data || data.length === 0) {
+                        msgEl.textContent = 'No se encontró la dirección. Probá con otro formato.';
+                        msgEl.style.display = 'block';
+                        return;
+                    }
+
+                    const lat = parseFloat(data[0].lat);
+                    const lng = parseFloat(data[0].lon);
+                    const displayName = data[0].display_name.split(',').slice(0,3).join(',');
+
+                    if (markerPersona) map.removeLayer(markerPersona);
+
+                    markerPersona = L.marker([lat, lng], { icon: iconoPersona, zIndexOffset: 1000 })
+                        .addTo(map)
+                        .bindTooltip(displayName, { direction: 'top', offset: [0, -46] });
+
+                    map.setView([lat, lng], 15);
+                    btnLimpiar.style.display = 'block';
+                    mostrarPanel(lat, lng, displayName);
+
+                } catch(e) {
+                    clearTimeout(timeoutId);
+                    if (e.name === 'AbortError') {
+                        msgEl.textContent = 'La búsqueda tardó demasiado. Intentá de nuevo.';
+                    } else {
+                        msgEl.textContent = 'Error al buscar. Verificá tu conexión.';
+                    }
+                    msgEl.style.display = 'block';
+                } finally {
+                    btnBuscar.disabled = false;
+                    btnBuscar.textContent = '🔍';
+                }
+            }
+
+            btnBuscar.addEventListener('click', buscarDireccion);
+            inputDir.addEventListener('keydown', e => { if (e.key === 'Enter') buscarDireccion(); });
+            btnLimpiar.addEventListener('click', limpiar);
+            panelClose.addEventListener('click', limpiar);
+
+            /* ---- Buscador por barrio (polígonos locales) ---- */
+            const inputBarrio     = document.getElementById('search-barrio');
+            const btnBuscarBarrio = document.getElementById('btn-buscar-barrio');
+            const msgBarrioEl     = document.getElementById('search-barrio-msg');
+            const panelBarrio     = document.getElementById('panel-barrio-resultado');
+            const panelBarrioClose = document.getElementById('panel-barrio-close');
+
+            function normBarrio(str) {
+                return (str || '').toUpperCase()
+                    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+                    .replace(/[^A-Z0-9\s]/g, '')
+                    .replace(/\s+/g, ' ').trim();
+            }
+
+            function limpiarBarrio() {
+                if (capaBarrio) { try { map.removeLayer(capaBarrio); } catch(e) {} capaBarrio = null; }
+                panelBarrio.classList.remove('visible');
+                inputBarrio.value = '';
+                msgBarrioEl.style.display = 'none';
+            }
+
+            // Lógica compartida: dibuja polígono + llena panel con zona/CPC/efectores
+            function mostrarPanelBarrio(nombreBarrio, geojson, cLat, cLng) {
+                const estilo = { color: '#28a745', weight: 2.5, fillColor: '#28a745', fillOpacity: 0.12 };
+                capaBarrio = L.geoJSON(geojson, { style: estilo }).addTo(map);
+                map.fitBounds(capaBarrio.getBounds(), { padding: [30, 30], maxZoom: 16 });
+
+                const zona = detectarZona(cLat, cLng);
+                const ap   = detectarAP(cLat, cLng);
+
+                // Extraer anillos del geojson para point-in-polygon
+                let anillos = [];
+                if (geojson.type === 'Polygon') {
+                    anillos = [geojson.coordinates[0]];
+                } else if (geojson.type === 'MultiPolygon') {
+                    anillos = geojson.coordinates.map(p => p[0]);
+                }
+
+                const efectoresDentro = (efectoresData || []).filter(f => {
+                    const coords = f.geometry?.coordinates;
+                    if (!coords || !anillos.length) return false;
+                    const [lng, lat] = coords;
+                    const nom = (f.properties?.Centro || '').toLowerCase();
+                    if (efectoresExcluidos.some(ex => nom.includes(ex))) return false;
+                    return anillos.some(anillo => pointInPolygon(lat, lng, anillo));
+                });
+
+                // CPC
+                let cpcNombre = null;
+                if (establecimientosData.length > 0) {
+                    const cpcMap = new Map();
+                    establecimientosData.filter(d => d.tipo === 'CPC').forEach(d => {
+                        const parts = (d.centro || '').split('#');
+                        if (parts.length === 2) cpcMap.set(parts[1].trim(), parts[0].trim());
+                    });
+                    const cpcCount = new Map();
+                    efectoresDentro.forEach(f => {
+                        const cpc = cpcMap.get((f.properties?.Centro || '').trim());
+                        if (cpc) cpcCount.set(cpc, (cpcCount.get(cpc) || 0) + 1);
+                    });
+                    if (cpcCount.size > 0)
+                        cpcNombre = [...cpcCount.entries()].sort((a, b) => b[1] - a[1])[0][0];
+                }
+
+                document.getElementById('panel-barrio-titulo').textContent = nombreBarrio.toUpperCase();
+                const setVal = (id, val) => {
+                    const el = document.getElementById(id);
+                    if (val) { el.textContent = val; el.classList.remove('sin-dato'); }
+                    else     { el.textContent = '—'; el.classList.add('sin-dato'); }
+                };
+                setVal('panel-barrio-cpc',  cpcNombre);
+                setVal('panel-barrio-zona', zona);
+                setVal('panel-barrio-ap',   ap);
+
+                const listaEl = document.getElementById('panel-barrio-efectores-lista');
+                listaEl.innerHTML = '';
+                if (efectoresDentro.length === 0) {
+                    listaEl.innerHTML = '<div style="font-size:12px;color:#aaa;text-align:center;padding:12px 0;">Sin efectores registrados en este barrio</div>';
+                } else {
+                    efectoresDentro.forEach(f => {
+                        const p = f.properties;
+                        const card = document.createElement('div');
+                        card.className = 'panel-dir-cs-card';
+                        card.style.cursor = 'pointer';
+                        card.innerHTML = `
+                            <div class="panel-dir-cs-header-info">
+                                <div class="panel-dir-cs-header-nombre">${p.Centro}</div>
+                                <div class="panel-dir-cs-header-dist" style="color:#888;font-size:11px;">${p.Tipo || ''}</div>
+                            </div>`;
+                        card.addEventListener('click', () => {
+                            if (window._mostrarPanelCentro) {
+                                window._mostrarPanelCentro(p.Centro, p.Tipo, p.Direccion, {
+                                    poblacion: p.PoblacionTotal ?? 0, mujeres: p.Mujeres ?? 0,
+                                    varones: p.Varones ?? 0, hogares: p.Hogares ?? 0,
+                                    nbi: p.HogaresNBI ?? 0, sinCobertura: p.PoblacionSinCobertura ?? 0,
+                                    zonaNum: p.Zona ?? null
+                                });
+                            }
+                        });
+                        listaEl.appendChild(card);
+                    });
+                }
+                panelBarrio.classList.add('visible');
+            }
+
+            // Fallback: usa barrios_cordoba.json local
+            function buscarBarrioLocal(textoNorm, nombreOriginal) {
+                const matches = barriosData.filter(b => normBarrio(b.nombre).includes(textoNorm));
+                if (matches.length === 0) {
+                    msgBarrioEl.textContent = 'No se encontró el barrio. Verificá el nombre.';
+                    msgBarrioEl.style.display = 'block';
+                    return;
+                }
+                const barrio = matches.sort((a, b) => a.nombre.length - b.nombre.length)[0];
+
+                // Convertir anillos del JSON local a formato GeoJSON
+                const geojson = barrio.anillos.length === 1
+                    ? { type: 'Polygon', coordinates: [barrio.anillos[0]] }
+                    : { type: 'MultiPolygon', coordinates: barrio.anillos.map(a => [a]) };
+
+                const primerAnillo = barrio.anillos[0];
+                let sumLat = 0, sumLng = 0;
+                primerAnillo.forEach(([lng, lat]) => { sumLat += lat; sumLng += lng; });
+
+                mostrarPanelBarrio(
+                    nombreOriginal || barrio.nombre,
+                    geojson,
+                    sumLat / primerAnillo.length,
+                    sumLng / primerAnillo.length
+                );
+            }
+
+            async function buscarBarrio() {
+                const textoOriginal = inputBarrio.value.trim();
+                const textoNorm = normBarrio(textoOriginal);
+                if (!textoNorm) return;
+
+                if (capaBarrio) { try { map.removeLayer(capaBarrio); } catch(e) {} capaBarrio = null; }
+                msgBarrioEl.style.display = 'none';
+                btnBuscarBarrio.disabled = true;
+                btnBuscarBarrio.textContent = '⏳';
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                try {
+                    // Bounds de la Ciudad de Córdoba (no la provincia)
+                    const CBA_S = -31.57, CBA_N = -31.28, CBA_W = -64.40, CBA_E = -64.05;
+                    const viewbox = `${CBA_W},${CBA_N},${CBA_E},${CBA_S}`;
+                    // Tipos OSM válidos para barrios
+                    const tiposBarrio = new Set(['suburb','neighbourhood','residential','quarter','village','hamlet','district']);
+
+                    const query = encodeURIComponent(`${textoOriginal}, Córdoba Capital, Argentina`);
+                    const url = `https://nominatim.openstreetmap.org/search?format=json&polygon_geojson=1&limit=5&q=${query}&countrycodes=ar&viewbox=${viewbox}&bounded=1`;
+                    const res = await fetch(url, { headers: { 'Accept-Language': 'es' }, signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    const data = await res.json();
+
+                    // Filtrar: dentro de los límites de la ciudad y con tipo de barrio
+                    const validos = (data || []).filter(item => {
+                        const lat = parseFloat(item.lat), lng = parseFloat(item.lon);
+                        const dentroDeCba = lat >= CBA_S && lat <= CBA_N && lng >= CBA_W && lng <= CBA_E;
+                        const esBarrio = tiposBarrio.has(item.type) || tiposBarrio.has(item.class);
+                        const tienePoligono = item.geojson &&
+                            (item.geojson.type === 'Polygon' || item.geojson.type === 'MultiPolygon');
+                        return dentroDeCba && tienePoligono && esBarrio;
+                    });
+
+                    if (validos.length > 0) {
+                        // ✅ OSM devolvió un barrio real dentro de Córdoba capital
+                        const item = validos[0];
+                        const nombre = item.display_name.split(',')[0].trim();
+                        mostrarPanelBarrio(nombre, item.geojson, parseFloat(item.lat), parseFloat(item.lon));
+                    } else {
+                        // No encontró barrio válido en OSM → usar JSON local
+                        buscarBarrioLocal(textoNorm, textoOriginal);
+                    }
+                } catch(e) {
+                    clearTimeout(timeoutId);
+                    // Sin red o timeout → usar JSON local
+                    buscarBarrioLocal(textoNorm, textoOriginal);
+                } finally {
+                    btnBuscarBarrio.disabled = false;
+                    btnBuscarBarrio.textContent = '🔍';
+                }
+            }
+
+            btnBuscarBarrio.addEventListener('click', buscarBarrio);
+            inputBarrio.addEventListener('keydown', e => { if (e.key === 'Enter') buscarBarrio(); });
+            panelBarrioClose.addEventListener('click', limpiarBarrio);
+        })();
     </script>
 
 </body>
