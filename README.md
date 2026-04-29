@@ -4,8 +4,7 @@ Aplicación web interactiva de mapeo epidemiológico para la Secretaría de Salu
 
 ## 🔗 Ver mapa en línea
 
-> **[👉 Abrir Mapa Tele Salud](https://TU_USUARIO.github.io/TU_REPOSITORIO/)**
-> *(Reemplazá `TU_USUARIO` y `TU_REPOSITORIO` con tus datos de GitHub)*
+> **[👉 Abrir Mapa Tele Salud](https://reporteyanalisisdedatos.github.io/Mapa-TeleSalud/)**
 
 ---
 
@@ -52,7 +51,7 @@ Aplicación web interactiva de mapeo epidemiológico para la Secretaría de Salu
 2. **Subir todos los archivos** (excepto la carpeta `backup/` y `.claude/`)
 3. Ir a **Settings → Pages**
 4. En *Source* seleccionar: `Deploy from a branch` → `main` → `/ (root)`
-5. Guardar — en unos minutos el mapa estará disponible en `https://TU_USUARIO.github.io/TU_REPOSITORIO/`
+5. Guardar — en unos minutos el mapa estará disponible en `https://reporteyanalisisdedatos.github.io/Mapa-TeleSalud/`
 
 ---
 
