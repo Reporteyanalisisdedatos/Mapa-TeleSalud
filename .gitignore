@@ -1,0 +1,12 @@
+# Archivos de Claude Code (no subir)
+.claude/
+
+# Backup
+backup/
+
+# Carpeta de links anterior
+link de git/
+
+# Sistema operativo Windows
+Thumbs.db
+desktop.ini
